@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide Puzzle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 20px;
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    #puzzle-container {
+      display: grid;
+      grid-gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+
+    .tile {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      font-weight: bold;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    .tile.blank {
+      background-color: #424242;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <h1>Slide Puzzle</h1>
+  <p>Click the tiles to slide them into the blank space. Can you solve it?</p>
+  <label for="size-input">Choose puzzle size (e.g., 3 for 3x3, 4 for 4x4): </label>
+  <input type="number" id="size-input" min="2" max="15" value="4" />
+  <button id="start-button">Start Game</button>
+  <div id="puzzle-container"></div>
+
+  <script>
+    const container = document.getElementById('puzzle-container');
+    const sizeInput = document.getElementById('size-input');
+    const startButton = document.getElementById('start-button');
+    let gridSize = 4;
+    let tiles;
+
+    const generateTiles = (size) => {
+      const totalTiles = size * size;
+      const numbers = Array.from({ length: totalTiles }, (_, i) => i + 1);
+      numbers[totalTiles - 1] = ''; // Blank space
+
+      const tiles = numbers.slice();
+      let blankIndex = totalTiles - 1;
+
+      for (let i = 0; i < (gridSize * gridSize) * Math.round(1337 / 2); i++) {
+        const validMoves = [];
+
+        if (blankIndex % size !== 0) validMoves.push(blankIndex - 1); // Left
+        if (blankIndex % size !== size - 1) validMoves.push(blankIndex + 1); // Right
+        if (blankIndex >= size) validMoves.push(blankIndex - size); // Up
+        if (blankIndex < totalTiles - size) validMoves.push(blankIndex + size); // Down
+
+        const nextIndex = validMoves[Math.floor(Math.random() * validMoves.length)];
+        [tiles[blankIndex], tiles[nextIndex]] = [tiles[nextIndex], tiles[blankIndex]];
+        blankIndex = nextIndex;
+      }
+
+      return tiles;
+    };
+
+    const render = () => {
+      container.innerHTML = '';
+      container.style.gridTemplateColumns = `repeat(${gridSize}, 100px)`;
+      tiles.forEach((tile, index) => {
+        const div = document.createElement('div');
+        div.textContent = tile;
+        div.className = 'tile';
+        if (tile === '') {
+          div.classList.add('blank');
+        } else {
+          div.addEventListener('click', () => moveTile(index));
+        }
+        container.appendChild(div);
+      });
+      
+      checkWin();
+    };
+
+    const moveTile = (index) => {
+      const blankIndex = tiles.indexOf('');
+      const validMoves = [
+        blankIndex - 1, // Left
+        blankIndex + 1, // Right
+        blankIndex - gridSize, // Up
+        blankIndex + gridSize  // Down
+      ];
+
+      if (index % gridSize === 0 && blankIndex === index - 1) return;
+      if (index % gridSize === gridSize - 1 && blankIndex === index + 1) return;
+
+      if (validMoves.includes(index)) {
+        [tiles[index], tiles[blankIndex]] = [tiles[blankIndex], tiles[index]];
+        render();
+      }
+    };
+
+    const checkWin = () => {
+      const totalTiles = gridSize * gridSize;
+      const winCondition = [''];
+      for (let i = 1; i < totalTiles; i++) {
+        winCondition.push(i);
+      }
+
+      if (tiles.every((tile, index) => tile == winCondition[index])) {
+        alert('Congratulations! You solved the puzzle!\nGood Job!');
+      }
+    };
+
+    startButton.addEventListener('click', () => {
+      gridSize = parseInt(sizeInput.value, 10);
+      tiles = generateTiles(gridSize);
+      render();
+    });
+
+    // Initialize the puzzle
+    tiles = generateTiles(gridSize);
+    render();
+  </script>
+</body>
+</html>
